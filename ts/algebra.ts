@@ -70,4 +70,62 @@ export function addEquations(sides_arg : Term[]) {
     
     return eq;
 }
+
+export function substitute(src_arg : Term, dst_arg : Term) : App {
+    const [dstRoot, dst] = dst_arg.cloneRoot();
+    const srcEq = src_arg.getRoot();
+    assert(srcEq.args.length == 2);
+    const sideIdx = src_arg.getRootEqSideIdx();
+    const src = srcEq.args[sideIdx];
+
+    const expr = srcEq.args[1 - sideIdx].clone();
+    expr.value.setdiv(src.value);
+
+    if(src instanceof RefVar){
+        if(dst instanceof RefVar && src.name == dst.name){
+            expr.value.setmul(dst.value);
+
+            dst.replaceTerm(expr);
+        }
+        else{
+
+            throw new MyError();
+        }
+    }
+    else if(src instanceof App && dst.parent instanceof App){
+        const dstApp = dst.parent;
+        if(src.str2() == dstApp.str2()){
+
+            expr.value.setmul(dst.value);
+
+            dst.replaceTerm(expr);
+        }
+        else if(src.fncName == dstApp.fncName){
+            const strids = dstApp.args.map(x => x.strid());
+            const terms : Term[] = [];
+            for(const arg of src.args){
+                const strid = arg.strid();
+                const idx = strids.indexOf(strid);
+                if(idx == -1){
+                    throw new MyError();
+                }
+
+                terms.push(dstApp.args[idx]);
+                strids[idx] = "";
+            }
+
+            for(const term of terms){
+                term.remArg();
+            }
+
+            dstApp.addArg(expr);
+        }
+        else{
+
+            throw new MyError();
+        }
+    }
+
+    return dstRoot;
+}
 }

@@ -27,6 +27,9 @@ export const ConstNum = parser_ts.ConstNum;
 export type  App = parser_ts.App;
 export const App = parser_ts.App;
 
+export type  RefVar = parser_ts.RefVar;
+export const RefVar = parser_ts.RefVar;
+
 export const operator = parser_ts.operator;
 
 }
