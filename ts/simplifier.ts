@@ -63,7 +63,53 @@ export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
         }
     }
 
-    return root;
+    yield root;
+}
+
+/**
+ * 
+ * @param root ルート
+ * @description 加算の中の同類項の係数をまとめる。
+ */
+export function* combineLikeTerms(root : Term) {
+    // すべての加算のリスト
+    const add_terms = allTerms(root).filter(x => x.isAdd()) as App[];
+
+    while(add_terms.length != 0){
+        // 未処理の加算がある場合
+
+        const add = add_terms.pop()!;
+        let idx = 0;
+        const map = new Map<string, Term>();
+        while(idx < add.args.length){
+            const term = add.args[idx];
+            assert(!term.isAdd());
+
+            const str2 = term.str2();
+            const like_term = map.get(str2);
+            if(like_term == undefined){
+                map.set(str2, term);
+                idx++;
+            }
+            else{
+                like_term.value.addRational(term.value);
+                term.remArg();
+                yield root;
+            }
+        }
+
+        if(add.args.length == 1){
+            add.oneArg();
+        }
+    }
+
+    yield root;
+}
+
+export function* simplify(root : Term){
+    yield* simplifyNestedAddAll(root);
+    yield* combineLikeTerms(root);
+    yield root;
 }
 
 }
