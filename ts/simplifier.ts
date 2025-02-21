@@ -1,5 +1,27 @@
 namespace algebra_ts {
 //
+
+function* simplifyConstNumMultiplier(root : Term){
+    // 引数に定数を含む乗算のリスト
+    const const_muls = allTerms(root).filter(x => x.isMul() && (x as App).args.some(y => y instanceof ConstNum)) as App[];
+
+    while(const_muls.length != 0){
+        // 引数に定数を含む乗算に対し
+        const mul = const_muls.pop()!;
+
+        // 引数内の定数のリスト
+        const nums = mul.args.filter(x => x instanceof ConstNum);
+
+        // 乗算の係数に、引数内の定数の積をかける。
+        nums.forEach(x => mul.value.setmul(x.value));
+
+        // 引数内の定数を取り除く。
+        nums.forEach(x => x.remArg());
+
+        yield root;
+    }
+}
+
 /**
  * @param add 親の加算
  * @param add_child 子の加算
@@ -94,6 +116,7 @@ export function* combineLikeTerms(root : Term) {
             else{
                 like_term.value.addRational(term.value);
                 term.remArg();
+
                 yield root;
             }
         }
@@ -106,9 +129,63 @@ export function* combineLikeTerms(root : Term) {
     yield root;
 }
 
+/**
+ * 
+ * @param root ルート
+ * @description 約分する。
+ */
+function* reduceFraction(root : Term){
+    // すべての除算のリスト
+    const div_terms = allTerms(root).filter(x => x.isDiv()) as App[];
+
+    while(div_terms.length != 0){
+        // 未処理の除算がある場合
+
+        const div = div_terms.pop()!;
+        const dividend = div.dividend();
+        const divisor  = div.divisor();
+        if(divisor instanceof ConstNum){
+
+            if(dividend.isAdd()){
+
+                const add = dividend as App;
+                if(add.args.every(x => divisor.value.isDivisor(x.value))){
+                    add.args.forEach(x => x.value.setdiv(divisor.value));
+                    div.replaceTerm(add);
+
+                    yield root;
+                }
+            }
+            else{
+
+                if(divisor.value.isDivisor(dividend.value)){
+                    dividend.value.setdiv(divisor.value);
+                    div.replaceTerm(dividend);
+
+                    yield root;
+                }
+            }
+        }
+    }
+
+    yield root;
+
+}
+
 export function* simplify(root : Term){
-    yield* simplifyNestedAddAll(root);
-    yield* combineLikeTerms(root);
+    while(true){
+        const strid = root.strid();
+        yield* simplifyConstNumMultiplier(root);
+        yield* simplifyNestedAddAll(root);
+        yield* combineLikeTerms(root);
+        yield* reduceFraction(root);
+        yield root;
+
+        if(strid == root.strid()){
+            break;
+        }
+    }
+
     yield root;
 }
 
