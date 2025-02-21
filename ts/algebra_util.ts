@@ -13,6 +13,14 @@ export function makeAdd(trms : Term[]) : App {
     return new App(operator("+"), trms.slice());
 }
 
+export function makeMul(trms : Term[]) : App {
+    return new App(operator("*"), trms.slice());
+}
+
+export function makeDiv(trms : Term[]) : App {
+    return new App(operator("/"), trms.slice());
+}
+
 export function makeEq(trms : Term[]) : App {
     return new App(operator("=="), trms.slice());
 }

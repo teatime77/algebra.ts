@@ -128,4 +128,40 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
 
     return dstRoot;
 }
+
+export function mulTerm(multiplicand : Term, multiplier : Term) : App {
+    let mul : App;
+
+    if(multiplicand.isMul()){
+        mul = multiplicand as App;
+        mul.addArg(multiplier);
+    }
+    else{
+        mul = makeMul([]);
+        multiplicand.replaceTerm(mul);
+        mul.addArgs([multiplicand, multiplier]);
+    }
+
+    return mul;
+}
+
+export function divideEquation(eq_arg : App, term : Term) : App {
+    const eq = eq_arg.clone();
+    assert(eq.isRootEq());
+
+    for(const arg of eq.args){
+        if(arg.isDiv()){
+            const divisor = arg.divisor();
+            mulTerm(divisor, term);
+        }
+        else{
+            const div = makeDiv([]);
+            arg.replaceTerm(div);
+            div.addArgs([arg, term]);
+        }
+    }
+
+
+    return eq;
+}
 }
