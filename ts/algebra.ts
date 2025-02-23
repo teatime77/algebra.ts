@@ -81,52 +81,80 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
     const expr = srcEq.args[1 - sideIdx].clone();
     expr.value.setdiv(src.value);
 
+    let ok = false;
     if(src instanceof RefVar){
         if(dst instanceof RefVar && src.name == dst.name){
-            expr.value.setmul(dst.value);
-
-            dst.replaceTerm(expr);
-        }
-        else{
-
-            throw new MyError();
+            ok = true;
         }
     }
-    else if(src instanceof App && dst.parent instanceof App){
-        const dstApp = dst.parent;
-        if(src.str2() == dstApp.str2()){
+    else if(src instanceof App){
+        if(dst instanceof App){
 
-            expr.value.setmul(dst.value);
+            const dst_app = dst as App;
 
-            dst.replaceTerm(expr);
+            initHashTerm();
+            setHashTerm([], src);
+            setHashTerm([], dst_app);
+
+            if(src.hash == dst_app.hash){
+                msg(`hash ${src.str2()}[${src.hash.toString(2)}] == ${dst_app.str2()}[${dst_app.hash.toString(2)}]`);
+                assert(src.str2() == dst_app.str2());
+                ok = true;
+            }
+            else{
+                msg(`hash ${src.str2()}[${src.hash.toString(2)}] != ${dst_app.str2()}[${dst_app.hash.toString(2)}]`)
+            }
         }
-        else if(src.fncName == dstApp.fncName){
-            const strids = dstApp.args.map(x => x.strid());
-            const terms : Term[] = [];
-            for(const arg of src.args){
-                const strid = arg.strid();
-                const idx = strids.indexOf(strid);
-                if(idx == -1){
-                    throw new MyError();
+        else if(dst.parent instanceof App){
+            const dst_app = dst.parent;
+            if(src.str2() == dst_app.str2()){
+                ok = true;
+            }
+            else if(src.fncName == dst_app.fncName){
+                initHashTerm();
+                setHashTerm([], src);
+                setHashTerm([], dst_app);
+    
+                const hashes = dst_app.args.map(x => x.hash);
+                const strids = dst_app.args.map(x => x.strid());
+                const terms : Term[] = [];
+                for(const arg of src.args){
+                    const hash  = arg.hash;
+                    const strid = arg.strid();
+                    const idx = strids.indexOf(strid);
+                    if(idx == -1){
+                        throw new MyError();
+                    }
+
+                    const idx2 = hashes.indexOf(hash);
+                    assert(idx2 == idx);
+                    msg(`hash idx ok:[${strid}] ${hash.toString(2)}`);
+                    
+                    terms.push(dst_app.args[idx]);
+                    strids[idx] = "";
+                    hashes[idx] = -1n;
                 }
+    
+                for(const term of terms){
+                    term.remArg();
+                }
+    
+                dst_app.addArg(expr);
 
-                terms.push(dstApp.args[idx]);
-                strids[idx] = "";
+                return dstRoot;
             }
-
-            for(const term of terms){
-                term.remArg();
-            }
-
-            dstApp.addArg(expr);
-        }
-        else{
-
-            throw new MyError();
         }
     }
 
-    return dstRoot;
+    if(ok){
+        
+        expr.value.setmul(dst.value);
+        dst.replaceTerm(expr);
+
+        return dstRoot;
+    }
+
+    throw new MyError();
 }
 
 export function mulTerm(multiplicand : Term, multiplier : Term) : App {
@@ -149,15 +177,17 @@ export function divideEquation(eq_arg : App, term : Term) : App {
     const eq = eq_arg.clone();
     assert(eq.isRootEq());
 
-    for(const arg of eq.args){
+    const eq_args = eq.args.slice();
+    for(const arg of eq_args){
+        const term_cp = term.clone();
         if(arg.isDiv()){
             const divisor = arg.divisor();
-            mulTerm(divisor, term);
+            mulTerm(divisor, term_cp);
         }
         else{
             const div = makeDiv([]);
             arg.replaceTerm(div);
-            div.addArgs([arg, term]);
+            div.addArgs([arg, term_cp]);
         }
     }
 

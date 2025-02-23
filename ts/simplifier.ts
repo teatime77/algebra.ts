@@ -173,6 +173,7 @@ function* reduceFraction(root : Term){
 }
 
 export function* simplify(root : Term){
+    root.verifyParent2();
     while(true){
         const strid = root.strid();
         yield* simplifyConstNumMultiplier(root);
@@ -185,6 +186,7 @@ export function* simplify(root : Term){
             break;
         }
     }
+    root.verifyParent2();
 
     yield root;
 }

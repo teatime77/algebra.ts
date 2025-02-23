@@ -18,6 +18,9 @@ export const areSetsEqual  = i18n_ts.areSetsEqual;
 export const isSubSet  = i18n_ts.isSubSet;
 export const check = i18n_ts.check;
 
+export type  Rational = parser_ts.Rational;
+export const Rational = parser_ts.Rational;
+
 export type  Term = parser_ts.Term;
 export const Term = parser_ts.Term;
 
