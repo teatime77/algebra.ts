@@ -88,6 +88,33 @@ export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
     yield root;
 }
 
+
+/**
+ * 
+ * @param root ルート
+ * @description 加算の中の引数の係数が同じならまとめる。
+ */
+export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
+    // すべての加算のリスト
+    const add_terms = allTerms(root).filter(x => x.isAdd()) as App[];
+
+    for(const add of add_terms){
+        // 最初の項の係数
+        const value = add.args[0].value;
+
+        if(add.args.slice(1).every(x => x.value.eq(value))){
+            // 次項以降も同じ係数の場合
+
+            add.value.setmul(value);
+            add.args.forEach(x => x.value.set(1));
+
+            yield root;
+        }
+    }
+
+    yield root;
+}
+
 /**
  * 
  * @param root ルート
@@ -178,6 +205,7 @@ export function* simplify(root : Term){
         const strid = root.strid();
         yield* simplifyConstNumMultiplier(root);
         yield* simplifyNestedAddAll(root);
+        yield* simplifyCommonConstFactorInAdd(root);
         yield* combineLikeTerms(root);
         yield* reduceFraction(root);
         yield root;
