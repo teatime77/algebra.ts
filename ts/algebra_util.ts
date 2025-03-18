@@ -62,7 +62,7 @@ function hashText(positions : number[], text : string) : bigint {
 
             value = BigInt(Math.random() * (2 ** 50));
         }
-        msg(`hash ${value.toString(2)} ${key}`);
+        // msg(`hash ${value.toString(2)} ${key}`);
         hashMap.set(key, value);
     }
 

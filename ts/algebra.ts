@@ -97,12 +97,12 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
             setHashTerm([], dst_app);
 
             if(src.hash == dst_app.hash){
-                msg(`hash ${src.str2()}[${src.hash.toString(2)}] == ${dst_app.str2()}[${dst_app.hash.toString(2)}]`);
+                // msg(`hash ${src.str2()}[${src.hash.toString(2)}] == ${dst_app.str2()}[${dst_app.hash.toString(2)}]`);
                 assert(src.str2() == dst_app.str2());
                 ok = true;
             }
             else{
-                msg(`hash ${src.str2()}[${src.hash.toString(2)}] != ${dst_app.str2()}[${dst_app.hash.toString(2)}]`)
+                // msg(`hash ${src.str2()}[${src.hash.toString(2)}] != ${dst_app.str2()}[${dst_app.hash.toString(2)}]`)
             }
         }
         else if(dst.parent instanceof App){
