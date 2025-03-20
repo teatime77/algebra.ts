@@ -4,6 +4,8 @@ export const MyError = i18n_ts.MyError;
 export const assert  = i18n_ts.assert;
 export const msg     = i18n_ts.msg;
 export const range   = i18n_ts.range;
+export const setPlayMode = i18n_ts.setPlayMode;
+export const sleep = i18n_ts.sleep;
 
 export const last    = i18n_ts.last;
 export const unique  = i18n_ts.unique;

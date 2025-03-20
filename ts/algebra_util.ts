@@ -1,14 +1,6 @@
 namespace algebra_ts {
 //
 
-export async function sleep(milliseconds : number) : Promise<void> {
-    return new Promise((resolve) => {
-        setTimeout(()=>{
-            resolve();
-        }, milliseconds);
-    });
-}
-
 export function makeAdd(trms : Term[]) : App {
     return new App(operator("+"), trms.slice());
 }
