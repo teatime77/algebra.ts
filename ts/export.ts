@@ -5,6 +5,7 @@ export const assert  = i18n_ts.assert;
 export const msg     = i18n_ts.msg;
 export const range   = i18n_ts.range;
 export const setPlayMode = i18n_ts.setPlayMode;
+export const PlayMode    = i18n_ts.PlayMode;
 export const sleep = i18n_ts.sleep;
 
 export const last    = i18n_ts.last;
@@ -19,6 +20,14 @@ export const circularPermutation  = i18n_ts.circularPermutation;
 export const areSetsEqual  = i18n_ts.areSetsEqual;
 export const isSubSet  = i18n_ts.isSubSet;
 export const check = i18n_ts.check;
+
+export type AbstractSpeech = i18n_ts.AbstractSpeech;
+export const Speech = i18n_ts.Speech;
+
+export const parseMath = parser_ts.parseMath;
+export const renderKatexSub = parser_ts.renderKatexSub;
+export const showFlow = parser_ts.showFlow;
+export const makeIdToTermMap = parser_ts.makeIdToTermMap;
 
 export type  Rational = parser_ts.Rational;
 export const Rational = parser_ts.Rational;

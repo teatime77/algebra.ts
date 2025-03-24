@@ -1,6 +1,9 @@
 namespace algebra_ts {
 //
 
+/*
+    x * c1 * c2 * y = (c1*c2) ・ x * y
+*/
 function* simplifyConstNumMultiplier(root : Term){
     // 引数に定数を含む乗算のリスト
     const const_muls = allTerms(root).filter(x => x.isMul() && (x as App).args.some(y => y instanceof ConstNum)) as App[];
@@ -26,6 +29,7 @@ function* simplifyConstNumMultiplier(root : Term){
  * @param add 親の加算
  * @param add_child 子の加算
  * @description 加算の中の加算を、親の加算にまとめる。
+ * a + (b + c) = a + b + c
  */
 function simplifyNestedAdd(add_child : App){
     const add : App = add_child.parent as App;
@@ -93,6 +97,8 @@ export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
  * 
  * @param root ルート
  * @description 加算の中の引数の係数が同じならまとめる。
+ * 
+ * c x + c y = c (x + y)
  */
 export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
     // すべての加算のリスト
@@ -119,6 +125,7 @@ export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
  * 
  * @param root ルート
  * @description 加算の中の同類項の係数をまとめる。
+ * c1 x + c2 x = (c1 + c2) x
  */
 export function* combineLikeTerms(root : Term) {
     // すべての加算のリスト
@@ -218,5 +225,41 @@ export function* simplify(root : Term){
 
     yield root;
 }
+
+export async function callSimplifyFnc(speech : AbstractSpeech, fnc : (root: Term)=>Generator<parser_ts.Term, void, unknown>, root_init : Term){
+    let strid = root_init.strid();
+    for(const root of fnc(root_init)){
+
+        let strid2 = root.strid();
+        if(strid != strid2){
+            await showTerm(speech, root);
+            strid = strid2;
+        }
+    }
+}
+
+export async function showSimplify(speech : AbstractSpeech, root : Term){
+    root.verifyParent2();
+
+    await showTerm(speech, root);
+    while(true){
+        const strid = root.strid();
+
+        await callSimplifyFnc(speech, simplifyConstNumMultiplier, root);
+        await callSimplifyFnc(speech, simplifyNestedAddAll, root);
+        await callSimplifyFnc(speech, simplifyCommonConstFactorInAdd, root);
+        await callSimplifyFnc(speech, combineLikeTerms, root);
+        await callSimplifyFnc(speech, reduceFraction, root);
+
+        if(strid == root.strid()){
+            break;
+        }
+    }
+    root.verifyParent2();
+
+    return root;
+}
+
+
 
 }
