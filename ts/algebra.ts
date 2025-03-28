@@ -1,18 +1,23 @@
 namespace algebra_ts {
 //
 
-export function transpose(app : App, term : Term){
-    assert(app.isEq() && app.args.length == 2);
+export async function transpose(root : App, term : Term, div : HTMLDivElement, speech : Speech){
+    assert(root.isEq() && root.args.length == 2);
 
-    const origin_idx = range(2).find(i => app.args[i].includesTerm(term))!;
+    const origin_idx = range(2).find(i => root.args[i].includesTerm(term))!;
     assert(origin_idx != undefined);
 
     const destination_idx = 1 - origin_idx;
     
-    const [origin, destination] = [origin_idx, destination_idx].map(i => app.args[i]);
+    const [origin, destination] = [origin_idx, destination_idx].map(i => root.args[i]);
+
+    term.canceled = true;
+    renderKatexSub(div, root.tex());
+    await sleep(1000);
+    term.canceled = true;
 
     if(origin == term){
-        app.setArg(ConstNum.zero(), origin_idx);
+        root.setArg(ConstNum.zero(), origin_idx);
     }
     else if(origin.isAdd()){
         assert(term.parent == origin);
@@ -31,13 +36,13 @@ export function transpose(app : App, term : Term){
     else {
 
         const add = makeAdd([destination, term]);
-        app.setArg(add, destination_idx);
+        root.setArg(add, destination_idx);
     }
 }
 
-export function addEquations(sides_arg : Term[]) {
+export async function addEquations(sides_arg : Term[], divs : HTMLDivElement[], speech : Speech) {
     const sides : Term[] = [];
-    for(const side of sides_arg){
+    for(const [idx, side] of sides_arg.entries()){
         if(side.parent == null || !side.parent.isEq()){
             throw new MyError();
         }
@@ -48,7 +53,7 @@ export function addEquations(sides_arg : Term[]) {
 
     const new_sides = [ makeAdd([]), makeAdd([]) ];
 
-    for(const side1 of sides){
+    for(const [idx, side1] of sides.entries()){
         if(side1.parent == null || !side1.parent.isEq()){
             throw new MyError();
         }
@@ -61,7 +66,14 @@ export function addEquations(sides_arg : Term[]) {
 
         new_sides[idx1].addArg(side1);
         new_sides[idx2].addArg(side2);
+
+        const eq = sides_arg[idx].parent as App;
+        assert(eq.isEq() && eq.parent == null);
+        eq.args[idx1].colorName = "blue";
+        eq.args[idx2].colorName = "red";
+        renderKatexSub(divs[idx], eq.tex());
     }
+    await sleep(1000);
 
     const eq = makeEq(new_sides);
     assert(eq.parent == null);
@@ -71,7 +83,12 @@ export function addEquations(sides_arg : Term[]) {
     return eq;
 }
 
-export function substitute(src_arg : Term, dst_arg : Term) : App {
+function highlightTex(term : Term, ele : HTMLElement){
+    term.colorName = "blue";
+    renderKatexSub(ele, term.getRoot().tex());
+}
+
+export async function substitute(src_arg : Term, dst_arg : Term, src_div : HTMLDivElement, dst_div : HTMLDivElement, speech : Speech) : Promise<App> {
     const [dstRoot, dst] = dst_arg.cloneRoot();
     const srcEq = src_arg.getRoot();
     assert(srcEq.args.length == 2);
@@ -117,7 +134,7 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
     
                 const hashes = dst_app.args.map(x => x.hash);
                 const strids = dst_app.args.map(x => x.strid());
-                const terms : Term[] = [];
+                const arg_idxs : number[] = [];
                 for(const arg of src.args){
                     const hash  = arg.hash;
                     const strid = arg.strid();
@@ -128,15 +145,22 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
 
                     const idx2 = hashes.indexOf(hash);
                     assert(idx2 == idx);
-                    msg(`hash idx ok:[${strid}] ${hash.toString(2)}`);
+                    // msg(`hash idx ok:[${strid}] ${hash.toString(2)}`);
                     
-                    terms.push(dst_app.args[idx]);
+                    arg_idxs.push(idx);
                     strids[idx] = "";
                     hashes[idx] = -1n;
                 }
     
-                for(const term of terms){
-                    term.remArg();
+                await highlightTex(src_arg, src_div);
+
+                const dst_arg_app = dst_arg.parent as App;
+                arg_idxs.forEach(idx => dst_arg_app.args[idx].colorName = "blue");
+                renderKatexSub(dst_div, dst_arg.getRoot().tex());
+                await sleep(1000);
+
+                for(const idx of arg_idxs){
+                    dst_app.args[idx].remArg();
                 }
     
                 dst_app.addArg(expr);
@@ -147,6 +171,9 @@ export function substitute(src_arg : Term, dst_arg : Term) : App {
     }
 
     if(ok){
+        await highlightTex(src_arg, src_div);
+        await highlightTex(dst_arg, dst_div);
+        await sleep(1000);
         
         expr.value.setmul(dst.value);
         dst.replaceTerm(expr);
@@ -173,12 +200,12 @@ export function mulTerm(multiplicand : Term, multiplier : Term) : App {
     return mul;
 }
 
-export function divideEquation(eq_arg : App, term : Term) : App {
+export async function divideEquation(eq_arg : App, term : Term, div : HTMLDivElement, speech : Speech) : Promise<App> {
     const eq = eq_arg.clone();
     assert(eq.isRootEq());
 
     const eq_args = eq.args.slice();
-    for(const arg of eq_args){
+    for(const [idx, arg] of eq_args.entries()){
         const term_cp = term.clone();
         if(arg.isDiv()){
             const divisor = arg.divisor();
@@ -189,8 +216,14 @@ export function divideEquation(eq_arg : App, term : Term) : App {
             arg.replaceTerm(div);
             div.addArgs([arg, term_cp]);
         }
+
+
+        eq.args[idx].colorName = "blue";
+        renderKatexSub(div, eq.tex());
+        await sleep(1000);
     }
 
+    eq.allTerms().forEach(x => x.colorName = undefined);
 
     return eq;
 }

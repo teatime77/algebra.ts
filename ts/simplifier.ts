@@ -4,7 +4,7 @@ namespace algebra_ts {
 /*
     x * c1 * c2 * y = (c1*c2) ・ x * y
 */
-function* simplifyConstNumMultiplier(root : Term){
+async function simplifyConstNumMultiplier(speech : Speech, ele : HTMLElement, root : Term){
     // 引数に定数を含む乗算のリスト
     const const_muls = allTerms(root).filter(x => x.isMul() && (x as App).args.some(y => y instanceof ConstNum)) as App[];
 
@@ -15,14 +15,21 @@ function* simplifyConstNumMultiplier(root : Term){
         // 引数内の定数のリスト
         const nums = mul.args.filter(x => x instanceof ConstNum);
 
-        // 乗算の係数に、引数内の定数の積をかける。
-        nums.forEach(x => mul.value.setmul(x.value));
+        for(const num of nums){
+            // 乗算の係数に、引数内の定数の積をかける。
+            mul.value.setmul(num.value);
+            num.canceled = true;
+            renderKatexSub(ele, root.tex());
+            await sleep(1000);
 
-        // 引数内の定数を取り除く。
-        nums.forEach(x => x.remArg());
-
-        yield root;
+            // 引数内の定数を取り除く。
+            num.remArg();
+            renderKatexSub(ele, root.tex());
+            await sleep(1000);
+        }
     }
+
+    return root;
 }
 
 /**
@@ -31,7 +38,7 @@ function* simplifyConstNumMultiplier(root : Term){
  * @description 加算の中の加算を、親の加算にまとめる。
  * a + (b + c) = a + b + c
  */
-function simplifyNestedAdd(add_child : App){
+async function simplifyNestedAdd(add_child : App){
     const add : App = add_child.parent as App;
     assert(add != null && add.isAdd());
 
@@ -55,9 +62,7 @@ function simplifyNestedAdd(add_child : App){
  * @param root ルート
  * @description 加算の中の加算を、親の加算にまとめる。
  */
-export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
-    msg("simplify-Nested-Add-All");
-
+export async function simplifyNestedAddAll(speech : Speech, ele : HTMLElement, root : Term){
     // すべての加算のリスト
     const add_terms = allTerms(root).filter(x => x.isAdd()) as App[];
 
@@ -85,11 +90,12 @@ export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
 
             remove(add_terms, add_child, false);
 
-            yield root;
+            renderKatexSub(ele, root.tex());
+            await sleep(1000);
         }
     }
 
-    yield root;
+    return root;
 }
 
 
@@ -100,7 +106,7 @@ export function* simplifyNestedAddAll(root : Term) : Generator<Term>{
  * 
  * c x + c y = c (x + y)
  */
-export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
+export async function simplifyCommonConstFactorInAdd(speech : Speech, ele : HTMLElement, root : Term){
     // すべての加算のリスト
     const add_terms = allTerms(root).filter(x => x.isAdd()) as App[];
 
@@ -114,11 +120,12 @@ export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
             add.value.setmul(value);
             add.args.forEach(x => x.value.set(1));
 
-            yield root;
+            renderKatexSub(ele, root.tex());
+            await sleep(1000);
         }
     }
 
-    yield root;
+    return root;
 }
 
 /**
@@ -127,7 +134,7 @@ export function* simplifyCommonConstFactorInAdd(root : Term) : Generator<Term>{
  * @description 加算の中の同類項の係数をまとめる。
  * c1 x + c2 x = (c1 + c2) x
  */
-export function* combineLikeTerms(root : Term) {
+export async function combineLikeTerms(speech : Speech, ele : HTMLElement, root : Term) {
     // すべての加算のリスト
     const add_terms = allTerms(root).filter(x => x.isAdd()) as App[];
 
@@ -151,7 +158,8 @@ export function* combineLikeTerms(root : Term) {
                 like_term.value.addRational(term.value);
                 term.remArg();
 
-                yield root;
+                renderKatexSub(ele, root.tex());
+                await sleep(1000);
             }
         }
 
@@ -160,7 +168,7 @@ export function* combineLikeTerms(root : Term) {
         }
     }
 
-    yield root;
+    return root;
 }
 
 /**
@@ -168,7 +176,7 @@ export function* combineLikeTerms(root : Term) {
  * @param root ルート
  * @description 約分する。
  */
-function* reduceFraction(root : Term){
+async function reduceFraction(speech : Speech, ele : HTMLElement, root : Term){
     // すべての除算のリスト
     const div_terms = allTerms(root).filter(x => x.isDiv()) as App[];
 
@@ -187,7 +195,8 @@ function* reduceFraction(root : Term){
                     add.args.forEach(x => x.value.setdiv(divisor.value));
                     div.replaceTerm(add);
 
-                    yield root;
+                    renderKatexSub(ele, root.tex());
+                    await sleep(1000);    
                 }
             }
             else{
@@ -196,60 +205,27 @@ function* reduceFraction(root : Term){
                     dividend.value.setdiv(divisor.value);
                     div.replaceTerm(dividend);
 
-                    yield root;
+                    renderKatexSub(ele, root.tex());
+                    await sleep(1000);
                 }
             }
         }
     }
 
-    yield root;
+    return root;
 
 }
 
-export function* simplify(root : Term){
+export async function simplify(speech : Speech, ele : HTMLElement, root : Term){
     root.verifyParent2();
     while(true){
+        let root2 : Term;
         const strid = root.strid();
-        yield* simplifyConstNumMultiplier(root);
-        yield* simplifyNestedAddAll(root);
-        yield* simplifyCommonConstFactorInAdd(root);
-        yield* combineLikeTerms(root);
-        yield* reduceFraction(root);
-        yield root;
-
-        if(strid == root.strid()){
-            break;
-        }
-    }
-    root.verifyParent2();
-
-    yield root;
-}
-
-export async function callSimplifyFnc(speech : AbstractSpeech, fnc : (root: Term)=>Generator<parser_ts.Term, void, unknown>, root_init : Term){
-    let strid = root_init.strid();
-    for(const root of fnc(root_init)){
-
-        let strid2 = root.strid();
-        if(strid != strid2){
-            await showTerm(speech, root);
-            strid = strid2;
-        }
-    }
-}
-
-export async function showSimplify(speech : AbstractSpeech, root : Term){
-    root.verifyParent2();
-
-    await showTerm(speech, root);
-    while(true){
-        const strid = root.strid();
-
-        await callSimplifyFnc(speech, simplifyConstNumMultiplier, root);
-        await callSimplifyFnc(speech, simplifyNestedAddAll, root);
-        await callSimplifyFnc(speech, simplifyCommonConstFactorInAdd, root);
-        await callSimplifyFnc(speech, combineLikeTerms, root);
-        await callSimplifyFnc(speech, reduceFraction, root);
+        root2 = await simplifyConstNumMultiplier(speech, ele, root);
+        root2 = await simplifyNestedAddAll(speech, ele, root);
+        root2 = await simplifyCommonConstFactorInAdd(speech, ele, root);
+        root2 = await combineLikeTerms(speech, ele, root);
+        root2 = await reduceFraction(speech, ele, root);
 
         if(strid == root.strid()){
             break;
@@ -259,7 +235,5 @@ export async function showSimplify(speech : AbstractSpeech, root : Term){
 
     return root;
 }
-
-
 
 }

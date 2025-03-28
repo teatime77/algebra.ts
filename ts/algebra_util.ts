@@ -182,10 +182,18 @@ export async function bodyOnLoad(){
     const eqs  = text.map(x => x.trim()).filter(x => x != "")
 
     const speech = new Speech();
-    setPlayMode(PlayMode.fastForward);
+    // setPlayMode(PlayMode.fastForward);
     for(const eq of eqs){
         const term = parseMath(eq);
-        await showSimplify(speech, term);
+
+        const span = document.createElement("span");
+        span.style.height = "30px";
+        span.style.cursor = "default";
+        span.style.userSelect = "none";
+    
+        document.body.appendChild(span);
+    
+        await simplify(speech, span, term);
 
         const hr = document.createElement("hr");
         document.body.appendChild(hr);
