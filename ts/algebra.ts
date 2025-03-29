@@ -1,7 +1,7 @@
 namespace algebra_ts {
 //
 
-export async function transpose(root : App, term : Term, div : HTMLDivElement, speech : Speech){
+export async function transpose(root : App, term : Term, div : HTMLDivElement, speech : Speech, add_to_end : boolean = true, show_progress : boolean = true){
     assert(root.isEq() && root.args.length == 2);
 
     const origin_idx = range(2).find(i => root.args[i].includesTerm(term))!;
@@ -11,10 +11,12 @@ export async function transpose(root : App, term : Term, div : HTMLDivElement, s
     
     const [origin, destination] = [origin_idx, destination_idx].map(i => root.args[i]);
 
-    term.canceled = true;
-    renderKatexSub(div, root.tex());
-    await sleep(1000);
-    term.canceled = true;
+    if(show_progress){
+        term.canceled = true;
+        renderKatexSub(div, root.tex());
+        await sleep(1000);
+        term.canceled = true;
+    }
 
     if(origin == term){
         root.setArg(ConstNum.zero(), origin_idx);
@@ -30,12 +32,18 @@ export async function transpose(root : App, term : Term, div : HTMLDivElement, s
     term.changeSign();
     
     if(destination.isAdd()){
-
-        (destination as App).addArg(term);
+        const add = destination as App;
+        if(add_to_end){
+            add.addArg(term);
+        }
+        else{
+            add.insArg(term, 0);
+        }
     }
     else {
 
-        const add = makeAdd([destination, term]);
+        const args = (add_to_end ? [destination, term] : [term, destination])
+        const add = makeAdd(args);
         root.setArg(add, destination_idx);
     }
 }
