@@ -137,42 +137,6 @@ function getTermByPointerEvent(map : Map<number,Term>, ev : PointerEvent) : Term
     throw new MyError();
 }
 
-export async function showTerm(speech : AbstractSpeech, root : Term){
-    const map = makeIdToTermMap(root);
-    allTerms(root).forEach(x => x.colorName = undefined);
-
-    const span = document.createElement("span");
-    span.style.height = "30px";
-    span.style.cursor = "default";
-    span.style.userSelect = "none";
-
-    document.body.appendChild(span);
-
-    await showFlow(speech, root, span);
-    renderKatexSub(span, root.tex());
-
-    let down_term : Term;
-    let down_time : number;
-
-    span.addEventListener("pointerdown", (ev : PointerEvent)=>{
-        down_term = getTermByPointerEvent(map, ev);
-        down_time = Date.now();
-        msg(`down term [${down_term.str()}]`);
-    });
-
-    span.addEventListener("pointerup", (ev : PointerEvent)=>{
-        const up_term = getTermByPointerEvent(map, ev);
-        if(down_term == up_term){
-            const elapsed_time = Date.now() - down_time;
-            msg(`up term [${up_term.str()}] ${elapsed_time}`);
-
-            up_term.colorName = (elapsed_time < 500 ? "blue" : "red");
-            renderKatexSub(span, root.tex());
-        }
-    });
-
-    (span.firstChild as HTMLElement).style.margin = "0";
-}
 
 export async function bodyOnLoad(){
     await i18n_ts.initI18n();
