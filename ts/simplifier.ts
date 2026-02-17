@@ -1,5 +1,6 @@
-namespace algebra_ts {
-//
+import { Speech, sleep, assert, remove } from "@i18n";
+import { Term, App, ConstNum, renderKatexSub } from "@parser";
+import { allTerms } from "./algebra_util.js";
 
 /*
     x * c1 * c2 * y = (c1*c2) ・ x * y
@@ -234,6 +235,4 @@ export async function simplify(speech : Speech, ele : HTMLElement, root : Term){
     root.verifyParent2();
 
     return root;
-}
-
 }

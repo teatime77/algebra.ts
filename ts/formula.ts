@@ -1,8 +1,6 @@
-namespace algebra_ts {
-//
-const fetchText = i18n_ts.fetchText;
-const isLetter = parser_ts.isLetter;
-type  Path = parser_ts.Path;
+import { assert, msg, fetchText } from "@i18n";
+import { RefVar, App, parseMath, Term, ConstNum, Path, isLetter } from "@parser";
+import { allTerms } from "./algebra_util.js";
 
 class FormulaError extends Error {    
 }
@@ -317,19 +315,4 @@ function enumFormulaCandidates(focus : Term){
             }
         }
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

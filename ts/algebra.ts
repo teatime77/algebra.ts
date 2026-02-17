@@ -1,5 +1,6 @@
-namespace algebra_ts {
-//
+import { makeAdd, makeEq, initHashTerm, setHashTerm, makeMul, makeDiv } from "./algebra_util.js";
+import { App, Term, renderKatexSub, ConstNum, RefVar } from '@parser';
+import { MyError, check, assert, range, sleep, Speech } from '@i18n';
 
 export async function transpose(root : App, term : Term, div : HTMLDivElement, speech : Speech, add_to_end : boolean = true, show_progress : boolean = true){
     assert(root.isEq() && root.args.length == 2);
@@ -234,5 +235,4 @@ export async function divideEquation(eq_arg : App, term : Term, div : HTMLDivEle
     eq.allTerms().forEach(x => x.colorName = undefined);
 
     return eq;
-}
 }

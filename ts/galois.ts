@@ -1,5 +1,5 @@
-namespace algebra_ts {
-//
+import { range, assert, msg } from "@i18n";
+
 export function EuclideanAlgorithm(n : number, m : number){
     assert(n != m && 0 < n && 0 < m);
     if(m < n){
@@ -127,6 +127,4 @@ export function testGalois(){
     makeSymmetricGroup(3);
     makeSymmetricGroup(4);
     makeSymmetricGroup(5);
-}
-
 }

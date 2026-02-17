@@ -1,5 +1,6 @@
-namespace algebra_ts {
-//
+import { assert, MyError, Speech, msg } from "@i18n";
+import { App, ConstNum, operator, parseMath, Rational, RefVar, Term } from "@parser";
+import { simplify } from "./simplifier.js";
 
 export function makeAdd(trms : Term[]) : App {
     return new App(operator("+"), trms.slice());
@@ -139,7 +140,7 @@ function getTermByPointerEvent(map : Map<number,Term>, ev : PointerEvent) : Term
 
 
 export async function bodyOnLoad(){
-    await i18n_ts.initI18n();
+    await initI18n();
 
     const pre = document.getElementById("eqs") as HTMLPreElement;
     const text = pre.innerText.split("\n");
@@ -166,4 +167,7 @@ export async function bodyOnLoad(){
     msg("algebra OK");
 }
 
+function initI18n() {
+    throw new Error("Function not implemented.");
 }
+
